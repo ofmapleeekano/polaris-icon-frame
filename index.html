@@ -1,0 +1,8 @@
+<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#ffffff"><title>Polaris アイコンフレームメーカー</title><link rel="stylesheet" href="style.css"></head><body>
+<main class="app"><header><p class="eyebrow">POLARIS 2026.12.26 SAT</p><h1>応援アイコンをつくろう！</h1><p class="lead">好きなフレームを選んで、あなたのアイコンを重ねられます。画像は端末内だけで処理され、外部へ送信・保存されません。</p></header>
+<section class="card"><div class="preview-wrap"><canvas id="canvas" width="1024" height="1024" aria-label="アイコンのプレビュー"></canvas><div id="empty" class="empty"><strong>まずは画像を選択</strong><span>選んだ画像はサーバーへ送信されません</span></div></div>
+<label class="upload"><input id="file" type="file" accept="image/*"><span>自分のアイコン画像を選ぶ</span></label>
+<div class="controls" id="controls" hidden><label>大きさ<input id="zoom" type="range" min="1" max="3" value="1" step="0.01"></label><button id="reset" class="sub" type="button">位置をリセット</button></div>
+<div class="frames"><h2>フレームを選ぶ</h2><div class="frame-grid" id="frameGrid"></div></div>
+<button id="download" class="download" type="button" disabled>完成画像を保存</button><p class="hint">プレビュー上でドラッグして位置を調整できます。スマホでは指で移動できます。</p></section>
+<footer><details><summary>画像・プライバシーについて</summary><p>このページでは、選択した画像と完成画像をサーバーへアップロードしません。画像合成はお使いのブラウザ内で行われます。アクセス時の通信情報については、公開先サービスのポリシーが適用されます。</p></details></footer></main><script src="app.js"></script></body></html>
