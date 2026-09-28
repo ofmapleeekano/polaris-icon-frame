@@ -33,9 +33,6 @@
       ctx.drawImage(photo, (SIZE - width) / 2 + offsetX, (SIZE - height) / 2 + offsetY, width, height);
     } else if (placeholder) {
       ctx.fillStyle = '#b9d3dd'; ctx.fillRect(0, 0, SIZE, SIZE);
-      ctx.fillStyle = '#080808'; ctx.textAlign = 'center';
-      ctx.font = 'bold 21px "Noto Sans JP", sans-serif';
-      ctx.fillText('ここに写真のプレビュー', SIZE / 2, SIZE / 2);
     }
     if (frames[frameName].complete && frames[frameName].naturalWidth) ctx.drawImage(frames[frameName], 0, 0, SIZE, SIZE);
   }
