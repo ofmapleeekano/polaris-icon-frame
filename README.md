@@ -1,16 +1,15 @@
-# Polaris Icon Maker
+# Polaris 応援アイコンメーカー
 
-GitHub Pagesでそのまま公開できる静的アイコンフレームメーカーです。
+GitHub Pages向けの静的サイトです。ユーザーが選ぶ写真はブラウザ内で処理し、アップロードしません。外部ライブラリ、解析タグ、SNSログインは使いません。
 
-## 公開方法
-1. GitHubで新しいPublic repositoryを作成します。
-2. このフォルダ内の `index.html`, `style.css`, `app.js`, `.nojekyll`, `frames` フォルダをリポジトリ直下へアップロードします。
-3. Repository の **Settings → Pages** を開きます。
-4. **Build and deployment → Source** を `Deploy from a branch` にします。
-5. Branchを `main`、フォルダを `/(root)` にして保存します。
-6. 数分後、Settings → Pages に表示されるURLからアクセスできます。
+## ファイル構成
 
-## プライバシー設計
-ユーザーが選択した画像はJavaScriptの `URL.createObjectURL()` でブラウザ内から読み込み、Canvas APIでブラウザ内合成します。画像を外部サーバーへ送信するコード、Analytics、Cookie、SNS認証は含めていません。
+`index.html`、`style.css`、`app.js`、`.nojekyll`、`frames/` をリポジトリのルートに置きます。ZIPや親フォルダそのものをアップロードしないでください。
 
-※ GitHub Pages自体のアクセスログ等についてはGitHubのポリシーが適用されます。
+GitHubで **Settings → Pages → Deploy from a branch → main → /(root) → Save** を選択します。GitHub Freeの場合、Pagesを使うリポジトリはPublicにします。
+
+## 動作確認
+
+ローカルで `python3 -m http.server 8000` を実行し、`http://localhost:8000/` で確認できます。写真選択、5色の切り替え、ドラッグ、ピンチ、拡大スライダー、PNG保存を確認してください。
+
+英字はAvenirを優先し、端末にない場合はMontserratなどにフォールバックします。日本語はNoto Sans JPを優先し、端末にない場合はシステムの日本語ゴシック体になります。Webフォントは外部配信しません。

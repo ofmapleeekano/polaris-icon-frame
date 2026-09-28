@@ -1,13 +1,120 @@
-const canvas=document.querySelector('#canvas'),ctx=canvas.getContext('2d');
-const file=document.querySelector('#file'),zoom=document.querySelector('#zoom'),download=document.querySelector('#download'),empty=document.querySelector('#empty'),controls=document.querySelector('#controls'),grid=document.querySelector('#frameGrid');
-const frames=[['Blue','frames/icon-frame-blue.png'],['Green','frames/icon-frame-green.png'],['Pink','frames/icon-frame-pink.png'],['Red','frames/icon-frame-red.png'],['White','frames/icon-frame-white.png']];
-let user=null,frame=null,framePath=frames[0][1],scale=1,baseScale=1,x=0,y=0,drag=false,lastX=0,lastY=0;
-function loadFrame(path){const im=new Image();im.onload=()=>{frame=im;draw()};im.src=path}loadFrame(framePath);
-frames.forEach(([name,path],i)=>{const b=document.createElement('button');b.className='frame-btn'+(i===0?' active':'');b.type='button';b.setAttribute('aria-label',name+'のフレーム');b.innerHTML=`<img src="${path}" alt="${name}">`;b.onclick=()=>{document.querySelectorAll('.frame-btn').forEach(v=>v.classList.remove('active'));b.classList.add('active');framePath=path;loadFrame(path)};grid.appendChild(b)});
-function resetPosition(){if(!user)return;baseScale=Math.max(canvas.width/user.width,canvas.height/user.height);scale=1;x=(canvas.width-user.width*baseScale)/2;y=(canvas.height-user.height*baseScale)/2;zoom.value=1;draw()}
-function draw(){ctx.clearRect(0,0,canvas.width,canvas.height);ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);if(user){const s=baseScale*scale;ctx.drawImage(user,x,y,user.width*s,user.height*s)}if(frame)ctx.drawImage(frame,0,0,canvas.width,canvas.height)}
-file.onchange=e=>{const f=e.target.files?.[0];if(!f)return;const url=URL.createObjectURL(f),im=new Image();im.onload=()=>{user=im;URL.revokeObjectURL(url);empty.hidden=true;controls.hidden=false;download.disabled=false;resetPosition()};im.src=url};
-zoom.oninput=()=>{if(!user)return;const old=scale;scale=+zoom.value;const cx=canvas.width/2,cy=canvas.height/2;x=cx-(cx-x)*(scale/old);y=cy-(cy-y)*(scale/old);draw()};document.querySelector('#reset').onclick=resetPosition;
-function point(e){const r=canvas.getBoundingClientRect();return{x:(e.clientX-r.left)*canvas.width/r.width,y:(e.clientY-r.top)*canvas.height/r.height}}
-canvas.addEventListener('pointerdown',e=>{if(!user)return;drag=true;canvas.setPointerCapture(e.pointerId);const p=point(e);lastX=p.x;lastY=p.y});canvas.addEventListener('pointermove',e=>{if(!drag)return;const p=point(e);x+=p.x-lastX;y+=p.y-lastY;lastX=p.x;lastY=p.y;draw()});canvas.addEventListener('pointerup',()=>drag=false);canvas.addEventListener('pointercancel',()=>drag=false);
-download.onclick=()=>{draw();canvas.toBlob(blob=>{const a=document.createElement('a');const url=URL.createObjectURL(blob);a.href=url;a.download='polaris-icon.png';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)},'image/png')};
+(() => {
+  'use strict';
+  const SIZE = 512;
+  const names = ['blue', 'green', 'pink', 'red', 'white'];
+  const frames = Object.fromEntries(names.map(name => [name, new Image()]));
+  const canvases = [document.getElementById('preview-desktop'), document.getElementById('preview-mobile')];
+  const fileInput = document.getElementById('photo-input');
+  const zoomInput = document.getElementById('zoom');
+  const status = document.getElementById('status');
+  let photo = null;
+  let frameName = 'blue';
+  let scale = Number(zoomInput.value);
+  let offsetX = 0, offsetY = 0;
+  const pointers = new Map();
+  let dragStart = null, pinchStart = null;
+
+  function notify(message) { status.textContent = message; }
+  function coverSize() {
+    if (!photo) return { width: SIZE, height: SIZE };
+    const ratio = Math.max(SIZE / photo.naturalWidth, SIZE / photo.naturalHeight) * scale;
+    return { width: photo.naturalWidth * ratio, height: photo.naturalHeight * ratio };
+  }
+  function clampOffset() {
+    const { width, height } = coverSize();
+    offsetX = Math.max((SIZE - width) / 2, Math.min((width - SIZE) / 2, offsetX));
+    offsetY = Math.max((SIZE - height) / 2, Math.min((height - SIZE) / 2, offsetY));
+  }
+  function render(canvas, placeholder = false) {
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, SIZE, SIZE);
+    if (photo) {
+      const { width, height } = coverSize();
+      ctx.drawImage(photo, (SIZE - width) / 2 + offsetX, (SIZE - height) / 2 + offsetY, width, height);
+    } else if (placeholder) {
+      ctx.fillStyle = '#b9d3dd'; ctx.fillRect(0, 0, SIZE, SIZE);
+      ctx.fillStyle = '#080808'; ctx.textAlign = 'center';
+      ctx.font = 'bold 21px "Noto Sans JP", sans-serif';
+      ctx.fillText('ここに写真のプレビュー', SIZE / 2, SIZE / 2);
+    }
+    if (frames[frameName].complete && frames[frameName].naturalWidth) ctx.drawImage(frames[frameName], 0, 0, SIZE, SIZE);
+  }
+  function renderAll() { canvases.forEach(canvas => render(canvas, true)); }
+  names.forEach(name => {
+    frames[name].onload = renderAll;
+    frames[name].src = `frames/icon-frame-${name}.png`;
+  });
+  document.querySelectorAll('input[name="frame"]').forEach(input => {
+    input.addEventListener('change', () => { frameName = input.value; renderAll(); });
+  });
+  fileInput.addEventListener('change', async () => {
+    const file = fileInput.files?.[0]; if (!file) return;
+    if (!file.type.startsWith('image/')) { notify('画像ファイルを選択してください。'); return; }
+    const url = URL.createObjectURL(file);
+    try {
+      const image = new Image();
+      image.src = url;
+      await image.decode();
+      photo = image; offsetX = offsetY = 0; scale = Number(zoomInput.value);
+      clampOffset(); renderAll(); notify('写真を読み込みました。');
+    } catch { notify('この画像を読み込めませんでした。JPGまたはPNGをお試しください。'); }
+    finally { URL.revokeObjectURL(url); }
+  });
+  zoomInput.addEventListener('input', () => {
+    scale = Number(zoomInput.value); clampOffset(); renderAll();
+  });
+  function xy(event, target) {
+    const rect = target.getBoundingClientRect();
+    return { x: (event.clientX - rect.left) * SIZE / rect.width, y: (event.clientY - rect.top) * SIZE / rect.height };
+  }
+  for (const canvas of canvases) {
+    canvas.addEventListener('pointerdown', event => {
+      if (!photo) return;
+      canvas.setPointerCapture(event.pointerId);
+      pointers.set(event.pointerId, xy(event, canvas));
+      if (pointers.size === 1) dragStart = { point: xy(event, canvas), x: offsetX, y: offsetY };
+      if (pointers.size === 2) {
+        const [a, b] = [...pointers.values()];
+        pinchStart = { distance: Math.hypot(a.x - b.x, a.y - b.y), scale };
+      }
+    });
+    canvas.addEventListener('pointermove', event => {
+      if (!photo || !pointers.has(event.pointerId)) return;
+      pointers.set(event.pointerId, xy(event, canvas));
+      if (pointers.size === 2 && pinchStart) {
+        const [a, b] = [...pointers.values()];
+        scale = Math.max(1, Math.min(3, pinchStart.scale * Math.hypot(a.x - b.x, a.y - b.y) / pinchStart.distance));
+        zoomInput.value = scale;
+      } else if (pointers.size === 1 && dragStart) {
+        const point = xy(event, canvas);
+        offsetX = dragStart.x + point.x - dragStart.point.x;
+        offsetY = dragStart.y + point.y - dragStart.point.y;
+      }
+      clampOffset(); renderAll();
+    });
+    const end = event => { pointers.delete(event.pointerId); pinchStart = null; dragStart = null; };
+    canvas.addEventListener('pointerup', end);
+    canvas.addEventListener('pointercancel', end);
+    canvas.addEventListener('wheel', event => {
+      if (!photo) return;
+      event.preventDefault();
+      scale = Math.max(1, Math.min(3, scale - event.deltaY * 0.002));
+      zoomInput.value = scale; clampOffset(); renderAll();
+    }, { passive: false });
+  }
+  document.getElementById('download').addEventListener('click', () => {
+    if (!photo) { notify('先に写真を選択してください。'); fileInput.focus(); return; }
+    if (!frames[frameName].complete || !frames[frameName].naturalWidth) { notify('フレームを読み込み中です。'); return; }
+    const output = document.createElement('canvas'); output.width = output.height = SIZE;
+    render(output);
+    output.toBlob(blob => {
+      if (!blob) { notify('画像を保存できませんでした。'); return; }
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a'); link.href = url;
+      link.download = `polaris-icon-${frameName}.png`;
+      document.body.append(link); link.click(); link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+      notify('PNG画像を保存しました。');
+    }, 'image/png');
+  });
+})();

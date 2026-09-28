@@ -1,8 +1,71 @@
-<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#ffffff"><title>Polaris アイコンフレームメーカー</title><link rel="stylesheet" href="style.css"></head><body>
-<main class="app"><header><p class="eyebrow">POLARIS 2026.12.26 SAT</p><h1>応援アイコンをつくろう！</h1><p class="lead">好きなフレームを選んで、あなたのアイコンを重ねられます。画像は端末内だけで処理され、外部へ送信・保存されません。</p></header>
-<section class="card"><div class="preview-wrap"><canvas id="canvas" width="1024" height="1024" aria-label="アイコンのプレビュー"></canvas><div id="empty" class="empty"><strong>まずは画像を選択</strong><span>選んだ画像はサーバーへ送信されません</span></div></div>
-<label class="upload"><input id="file" type="file" accept="image/*"><span>自分のアイコン画像を選ぶ</span></label>
-<div class="controls" id="controls" hidden><label>大きさ<input id="zoom" type="range" min="1" max="3" value="1" step="0.01"></label><button id="reset" class="sub" type="button">位置をリセット</button></div>
-<div class="frames"><h2>フレームを選ぶ</h2><div class="frame-grid" id="frameGrid"></div></div>
-<button id="download" class="download" type="button" disabled>完成画像を保存</button><p class="hint">プレビュー上でドラッグして位置を調整できます。スマホでは指で移動できます。</p></section>
-<footer><details><summary>画像・プライバシーについて</summary><p>このページでは、選択した画像と完成画像をサーバーへアップロードしません。画像合成はお使いのブラウザ内で行われます。アクセス時の通信情報については、公開先サービスのポリシーが適用されます。</p></details></footer></main><script src="app.js"></script></body></html>
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Polaris｜応援アイコンメーカー</title>
+  <meta name="description" content="好きな写真にPolarisのフレームを重ねて、応援アイコンをつくろう。">
+  <link rel="stylesheet" href="style.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <main class="page">
+    <header class="intro">
+      <h1><span class="desktop-only">ともき船長を応援する<br></span><span class="mobile-only">応援アイコンを<br></span><span class="desktop-only">アイコンをつくろう！</span><span class="mobile-only">つくろう。</span></h1>
+      <p>好きな写真にフレームを重ねて、あなただけの応援アイコンに。<br class="desktop-only">登録なし・無料でつくれます。<br class="desktop-only">ぜひSNSのアイコンとして使ってみてください！</p>
+    </header>
+
+    <div class="workspace">
+      <div class="controls">
+        <section class="step step-one" aria-labelledby="step-one-title">
+          <p class="step-number" aria-label="ステップ1">STEP 1</p>
+          <h2 id="step-one-title">アイコンの写真を選ぶ</h2>
+          <p class="support">写真を選ぶと、その場でプレビューできます。</p>
+          <label class="primary-button" for="photo-input">写真を選択する</label>
+          <input id="photo-input" type="file" accept="image/*" aria-label="アイコンに使う写真を選択">
+          <p class="file-note">JPG・PNGなどの画像に対応</p>
+        </section>
+
+        <section class="step step-two" aria-labelledby="step-two-title">
+          <p class="step-number" aria-label="ステップ2">STEP 2</p>
+          <h2 id="step-two-title">フレームと位置を調整</h2>
+          <div class="preview mobile-preview">
+            <h3>プレビュー</h3>
+            <div class="canvas-wrap"><canvas id="preview-mobile" width="512" height="512" aria-label="アイコンのプレビュー"></canvas></div>
+            <p class="preview-hint">指で動かして位置を調整</p>
+          </div>
+          <fieldset class="frame-picker">
+            <legend><span class="desktop-only">好きな色を選ぶ</span><span class="mobile-only">好きなフレームを選ぶ</span></legend>
+            <div class="frame-options">
+              <label class="frame-choice"><input type="radio" name="frame" value="blue" checked><span class="swatch blue"></span><span>ブルー</span></label>
+              <label class="frame-choice"><input type="radio" name="frame" value="green"><span class="swatch green"></span><span>グリーン</span></label>
+              <label class="frame-choice"><input type="radio" name="frame" value="pink"><span class="swatch pink"></span><span>ピンク</span></label>
+              <label class="frame-choice"><input type="radio" name="frame" value="red"><span class="swatch red"></span><span>レッド</span></label>
+              <label class="frame-choice"><input type="radio" name="frame" value="white"><span class="swatch white"></span><span>ホワイト</span></label>
+            </div>
+          </fieldset>
+          <div class="size-control">
+            <label for="zoom">写真の大きさ</label>
+            <div class="range-row"><span aria-hidden="true">−</span><input id="zoom" type="range" min="1" max="3" step="0.01" value="1.6"><span aria-hidden="true">＋</span></div>
+          </div>
+          <p class="move-hint desktop-only">写真はプレビュー上でドラッグして移動できます。</p>
+          <p class="move-hint mobile-only">プレビュー上で写真を動かせます。<br>ピンチ操作やスライダーで大きさを調整。</p>
+        </section>
+      </div>
+      <div class="preview desktop-preview">
+        <h3>プレビュー</h3>
+        <div class="canvas-wrap"><canvas id="preview-desktop" width="512" height="512" aria-label="アイコンのプレビュー"></canvas></div>
+        <p class="preview-hint">写真を選ぶと、ここにフレーム付きの<br>アイコンが表示されます。</p>
+      </div>
+    </div>
+
+    <section class="finish" aria-labelledby="step-three-title">
+      <div><p class="finish-title"><span class="step-number" aria-label="ステップ3">STEP 3</span> <strong id="step-three-title">完成したら保存</strong></p><p>SNSのアイコンに設定して、ともき船長を応援しよう！</p></div>
+      <button id="download" type="button">PNG画像を保存</button>
+    </section>
+    <p class="privacy"><span class="desktop-only">プライバシーについて ・ 選択した画像はお使いの端末内で処理され、当サイトに送信・保存されません。</span><span class="mobile-only">プライバシーについて<br>画像は端末内で処理され、外部へ送信・保存されません。</span></p>
+    <p id="status" class="sr-only" role="status" aria-live="polite"></p>
+  </main>
+</body>
+</html>
