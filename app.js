@@ -100,17 +100,65 @@
     }, { passive: false });
   }
   document.getElementById('download').addEventListener('click', () => {
-    if (!photo) { notify('先に写真を選択してください。'); fileInput.focus(); return; }
-    if (!frames[frameName].complete || !frames[frameName].naturalWidth) { notify('フレームを読み込み中です。'); return; }
-    const output = document.createElement('canvas'); output.width = output.height = SIZE;
+    if (!photo) {
+      notify('先に写真を選択してください。');
+      fileInput.focus();
+      return;
+    }
+
+    if (!frames[frameName].complete || !frames[frameName].naturalWidth) {
+      notify('フレームを読み込み中です。');
+      return;
+    }
+
+    const output = document.createElement('canvas');
+    output.width = output.height = SIZE;
     render(output);
-    output.toBlob(blob => {
-      if (!blob) { notify('画像を保存できませんでした。'); return; }
+
+    output.toBlob(async blob => {
+      if (!blob) {
+        notify('画像を保存できませんでした。');
+        return;
+      }
+
+      const file = new File(
+        [blob],
+        `polaris-icon-${frameName}.png`,
+        { type: 'image/png' }
+      );
+
+      // スマホ：共有メニューを開く
+      if (
+        navigator.share &&
+        navigator.canShare &&
+        navigator.canShare({ files: [file] })
+      ) {
+        try {
+          await navigator.share({
+            files: [file]
+          });
+
+          notify('画像を共有しました。');
+          return;
+        } catch (error) {
+          // ユーザーが共有画面を閉じただけなら終了
+          if (error.name === 'AbortError') return;
+        }
+      }
+
+      // 共有機能が使えないブラウザ：通常ダウンロード
       const url = URL.createObjectURL(blob);
-      const link = document.createElement('a'); link.href = url;
+      const link = document.createElement('a');
+
+      link.href = url;
       link.download = `polaris-icon-${frameName}.png`;
-      document.body.append(link); link.click(); link.remove();
+
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
       setTimeout(() => URL.revokeObjectURL(url), 60000);
+
       notify('PNG画像を保存しました。');
     }, 'image/png');
   });
