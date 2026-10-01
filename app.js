@@ -121,13 +121,30 @@
         return;
       }
 
+      const fileName = `polaris-icon-${frameName}.png`;
+
+      // CSSのスマホ表示と同じ800pxを基準にする
+      const isMobile = window.matchMedia('(max-width: 800px)').matches;
+
+      // ─────────────────────────
+      // PC
+      // → 従来どおりPNGをダウンロード
+      // ─────────────────────────
+      if (!isMobile) {
+        downloadImage(blob, fileName);
+        return;
+      }
+
+      // ─────────────────────────
+      // スマホ
+      // → まずOSの共有画面を試す
+      // ─────────────────────────
       const file = new File(
         [blob],
-        `polaris-icon-${frameName}.png`,
+        fileName,
         { type: 'image/png' }
       );
 
-      // スマホ：共有メニューを開く
       if (
         navigator.share &&
         navigator.canShare &&
@@ -140,26 +157,154 @@
 
           notify('画像を共有しました。');
           return;
+
         } catch (error) {
-          // ユーザーが共有画面を閉じただけなら終了
-          if (error.name === 'AbortError') return;
+
+          // ユーザー自身が共有画面を閉じた場合は何もしない
+          if (error.name === 'AbortError') {
+            return;
+          }
+
+          console.warn(
+            '共有機能を使用できなかったため、長押し保存に切り替えます。',
+            error
+          );
         }
       }
 
-      // 共有機能が使えないブラウザ：通常ダウンロード
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
+      // ─────────────────────────
+      // LINE・Xなど、
+      // ファイル共有できないアプリ内ブラウザ
+      // → 完成画像を表示して長押し保存
+      // ─────────────────────────
+      showSaveFallback(blob);
 
-      link.href = url;
-      link.download = `polaris-icon-${frameName}.png`;
-
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-
-      setTimeout(() => URL.revokeObjectURL(url), 60000);
-
-      notify('PNG画像を保存しました。');
     }, 'image/png');
   });
+
+
+  function downloadImage(blob, fileName) {
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName;
+
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+    setTimeout(() => {
+      URL.revokeObjectURL(url);
+    }, 60000);
+
+    notify('PNG画像を保存しました。');
+  }
+
+
+  function showSaveFallback(blob) {
+    const url = URL.createObjectURL(blob);
+
+    const overlay = document.createElement('div');
+
+    overlay.style.cssText = `
+      position: fixed;
+      inset: 0;
+      z-index: 99999;
+      background: rgba(0, 0, 0, 0.92);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      box-sizing: border-box;
+      overflow-y: auto;
+    `;
+
+
+    // メインメッセージ
+    const message = document.createElement('p');
+
+    message.textContent =
+      '画像を長押しして保存してください';
+
+    message.style.cssText = `
+      color: #fff;
+      font-size: 16px;
+      font-weight: 700;
+      line-height: 1.5;
+      margin: 0 0 20px;
+      text-align: center;
+    `;
+
+
+    // 完成画像
+    const image = document.createElement('img');
+
+    image.src = url;
+    image.alt = '完成したアイコン';
+
+    image.style.cssText = `
+      display: block;
+      width: min(100%, 512px);
+      height: auto;
+      border-radius: 8px;
+      -webkit-touch-callout: default;
+      -webkit-user-select: auto;
+      user-select: auto;
+    `;
+
+
+    // 補足
+    const subMessage = document.createElement('p');
+
+    subMessage.textContent =
+      '保存できない場合は、ブラウザで開いてお試しください。';
+
+    subMessage.style.cssText = `
+      color: #fff;
+      font-size: 13px;
+      line-height: 1.5;
+      margin: 18px 0 0;
+      text-align: center;
+      opacity: 0.75;
+    `;
+
+
+    // 閉じるボタン
+    const closeButton = document.createElement('button');
+
+    closeButton.type = 'button';
+    closeButton.textContent = '閉じる';
+
+    closeButton.style.cssText = `
+      margin-top: 22px;
+      width: min(100%, 320px);
+      min-height: 52px;
+      border: 0;
+      border-radius: 8px;
+      background: #fff;
+      color: #000;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+    `;
+
+
+    // 閉じる処理
+    closeButton.addEventListener('click', () => {
+      overlay.remove();
+      URL.revokeObjectURL(url);
+    });
+
+
+    overlay.appendChild(message);
+    overlay.appendChild(image);
+    overlay.appendChild(subMessage);
+    overlay.appendChild(closeButton);
+
+    document.body.appendChild(overlay);
+
+    notify('完成した画像を長押しして保存してください。');
+  }
 })();
